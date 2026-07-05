@@ -61,7 +61,7 @@ public class TodoRestApi implements TodoController<Todo> {
     }
 
     @Override
-    @PatchMapping("/{id}/toggle")
+    @PatchMapping("/{id}/toggle-status")
     public ResponseEntity<Todo> toggleStatus(@PathVariable UUID id) {
         return ResponseEntity.ok(todoService.toggleStatus(id));
     }
