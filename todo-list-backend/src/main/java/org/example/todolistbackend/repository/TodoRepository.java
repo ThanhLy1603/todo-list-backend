@@ -6,10 +6,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface TodoRepository extends JpaRepository<Todo, UUID> {
-    Page<Todo> findByTitleContainingAndStatus(String title, String status, Pageable pageable);
-    Page<Todo> findByTitleContaining(String title, Pageable pageable);
+    Page<Todo> findByTitleContainingAndStatusAndIsDeletedFalse(String title, String status, Pageable pageable);
+    Page<Todo> findByTitleContainingAndIsDeletedFalse(String title, Pageable pageable);
+    Optional<Todo> findByIdAndIsDeletedFalse(UUID id);
 }

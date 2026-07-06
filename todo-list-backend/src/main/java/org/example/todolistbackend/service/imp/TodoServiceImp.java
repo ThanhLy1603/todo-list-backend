@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.todolistbackend.dto.request.TodoRequest;
 import org.example.todolistbackend.dto.response.ApiResponse;
+import org.example.todolistbackend.dto.response.TodoResponse;
 import org.example.todolistbackend.entity.Todo;
 import org.example.todolistbackend.exception.ResourceNotFoundException;
 import org.example.todolistbackend.repository.TodoRepository;
@@ -21,25 +22,29 @@ public class TodoServiceImp implements TodoService {
     private final TodoRepository todoRepository;
 
     @Override
-    public Page<Todo> findAllTodos(String search, String status, Pageable pageable) {
+    public Page<TodoResponse> findAllTodos(String search, String status, Pageable pageable) {
         String keyword = (search == null) ? "" : search.trim().toLowerCase();
 
         if (status != null && !status.trim().isEmpty()) {
-            return todoRepository.findByTitleContainingAndStatus(keyword, status, pageable);
+            return todoRepository.findByTitleContainingAndStatusAndIsDeletedFalse(keyword, status, pageable)
+                    .map(TodoResponse::toTodoResponse);
         }
 
-        return todoRepository.findByTitleContaining(keyword, pageable);
+        return todoRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable)
+                .map(TodoResponse::toTodoResponse);
     }
 
     @Override
-    public Todo findTodoById(UUID id) {
-        return todoRepository.findById(id)
+    public TodoResponse findTodoById(UUID id) {
+        Todo todo = todoRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc id: " + id));
+
+        return TodoResponse.toTodoResponse(todo);
     }
 
     @Override
     @Transactional
-    public Todo createTodo(TodoRequest request) {
+    public TodoResponse createTodo(TodoRequest request) {
         Todo todo = new Todo();
 
         String status = request.getStatus();
@@ -57,18 +62,20 @@ public class TodoServiceImp implements TodoService {
 
         todo.setTitle(request.getTitle());
         todo.setDescription(request.getDescription());
-        todo.setCreateAt(LocalDateTime.now());
+        todo.setCreatedAt(LocalDateTime.now());
         todo.setUpdatedAt(LocalDateTime.now());
+        todo.setIsDeleted(false);
 
         System.out.println("todo: " + todo.toString());
 
-        return todoRepository.save(todo);
+        return TodoResponse.toTodoResponse(todoRepository.save(todo));
     }
 
     @Override
     @Transactional
-    public Todo updateTodo(UUID id, TodoRequest request) {
-        Todo todo = findTodoById(id);
+    public TodoResponse updateTodo(UUID id, TodoRequest request) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc id: " + id));
         todo.setTitle(request.getTitle());
         todo.setDescription(request.getDescription());
 
@@ -79,23 +86,27 @@ public class TodoServiceImp implements TodoService {
 
         todo.setUpdatedAt(LocalDateTime.now());
 
-        System.out.println("todo: " + todo.toString());
+        Todo updatedTodo = todoRepository.save(todo);
 
-        return todoRepository.save(todo);
+        return TodoResponse.toTodoResponse(updatedTodo);
     }
 
     @Override
     @Transactional
     public ApiResponse deleteTodo(UUID id) {
-        Todo todo = findTodoById(id);
-        todoRepository.delete(todo);
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc id: " + id));
 
+        System.out.println("todo deleted: " + todo.toString());
+
+        todo.setIsDeleted(true);
         return new ApiResponse("Xóa thành công", true);
     }
 
     @Override
-    public Todo toggleStatus(UUID id) {
-        Todo todo = findTodoById(id);
+    public TodoResponse toggleStatus(UUID id) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy công việc id: " + id));
 
         String currentStatus = todo.getStatus();
 
@@ -103,6 +114,9 @@ public class TodoServiceImp implements TodoService {
         todo.setStatus(newStatus);
         todo.setUpdatedAt(LocalDateTime.now());
 
-        return todoRepository.save(todo);
+        Todo toggledStatusTodo = todoRepository.save(todo);
+
+        return TodoResponse.toTodoResponse(toggledStatusTodo);
     }
+
 }

@@ -14,5 +14,5 @@ public interface TodoController<T> {
     public ResponseEntity<T> createTodo(TodoRequest todoRequest);
     public ResponseEntity<T> updateTodo(UUID id,TodoRequest todoRequest);
     public ResponseEntity<ApiResponse> deleteTodo(UUID id);
-    public ResponseEntity<Todo> toggleStatus(UUID id);
+    public ResponseEntity<T> toggleStatus(UUID id);
 }

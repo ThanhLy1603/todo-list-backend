@@ -31,10 +31,13 @@ public class Todo {
     private String status = "PENDING";
 
     @Column(name = "created_at")
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "isDeleted")
+    private Boolean isDeleted;
 
     @Override
     public String toString() {
@@ -43,8 +46,9 @@ public class Todo {
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", status='" + status + '\'' +
-                ", createAt=" + createAt +
+                ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
+                ", isDeleted=" + isDeleted +
                 '}';
     }
 }
